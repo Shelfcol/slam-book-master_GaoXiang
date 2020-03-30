@@ -12,6 +12,18 @@
 #include <chrono>
 using namespace std; 
 
+/*
+以下是几个重要的成员变量和函数
+_measurement：存储观测值
+_error：存储computeError() 函数计算的误差
+_vertices[]：存储顶点信息，比如二元边的话，_vertices[] 的大小为2，存储顺序和调用setVertex(int, vertex) 是设定的int 有关（0 或1）
+setId(int)：来定义边的编号（决定了在H矩阵中的位置）
+setMeasurement(type) 函数来定义观测值
+setVertex(int, vertex) 来定义顶点
+setInformation() 来定义协方差矩阵的逆
+*/
+
+
 // 曲线模型的顶点，模板参数：优化变量维度和数据类型
 class CurveFittingVertex: public g2o::BaseVertex<3, Eigen::Vector3d>
 {
@@ -26,7 +38,7 @@ public:
     {
         _estimate += Eigen::Vector3d(update);
     }
-    // 存盘和读盘：留空
+    // 存盘和读盘：留空，一般不需要进行读写操作，仅仅声明一下就可以
     virtual bool read( istream& in ) {}
     virtual bool write( ostream& out ) const {}
 };
@@ -37,7 +49,7 @@ class CurveFittingEdge: public g2o::BaseUnaryEdge<1,double,CurveFittingVertex>
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     CurveFittingEdge( double x ): BaseUnaryEdge(), _x(x) {}
-    // 计算曲线模型误差
+    // 计算曲线模型误差，非常重要
     void computeError()
     {
         const CurveFittingVertex* v = static_cast<const CurveFittingVertex*> (_vertices[0]);
@@ -61,7 +73,7 @@ int main( int argc, char** argv )
     vector<double> x_data, y_data;      // 数据
     
     cout<<"generating data: "<<endl;
-    for ( int i=0; i<N; i++ )
+    for ( int i=0; i<N; i++ )//生成有误差的数
     {
         double x = i/100.0;
         x_data.push_back ( x );
