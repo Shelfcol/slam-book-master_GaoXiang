@@ -123,8 +123,9 @@ public:
           = static_cast<const CameraParameters *>(parameter(0));
         //误差计算，测量值减去估计值，也就是重投影误差obs-cam
         //估计值计算方法是T*p,得到相机坐标系下坐标，然后在利用camera2pixel()函数得到像素坐标。    
-        Vector2D obs(_measurement);//即为观测值的像素坐标
-		
+        Vector16d obs(_measurement);//即为观测值的像素值
+        
+		_error = obs-cam->cam_map(v1->estimate().map(v2->estimate()));//误差=观测-投影（像素坐标下的运算）
         // ----------------  结束你的代码 ----------------------//
     }
 	
@@ -267,6 +268,21 @@ int main(int argc, char **argv) {
 
     // 第5步：添加顶点和边
     // ----------------  开始你的代码 ----------------------//
+    int index=0;
+    //1.将相机的位姿添加进去
+    for (VecSE3 p:poses)
+    {
+        g2o::VertexSE3Expmap* pose = new g2o::VertexSE3Expmap(); // camera pose，g2o内定的类型
+		Eigen::Matrix3d R_mat;
+		
+		R_mat.setIdentity(3,3);
+		pose->setId ( index++ );
+		pose->setEstimate (p);
+		optimizer.addVertex ( pose );
+    }
+    //2.将多组16个像素向量添加为顶点
+    
+    //3.将像素向量和相机位姿添加为边，target图像作为measurement输入
 	// 参考十四讲中直接法BA部分
 	
     // ----------------  结束你的代码 ----------------------//
